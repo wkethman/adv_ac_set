@@ -78,15 +78,22 @@ blueprint:
       default: 68
 
     heating_default_temp:
-      name: Heating - Default Temperature
-      description: The default temperature to set during heating mode when you are home.
+      name: Heating - Default Temperature (Input Number)
+      description: The input_number entity that holds the default heating temperature.
       selector:
-        number:
-          min: 60
-          max: 80
-          unit_of_measurement: "°F"
-          mode: box
-      default: 64
+        entity:
+          domain: input_number
+          
+    #heating_default_temp:
+    #  name: Heating - Default Temperature
+    #  description: The default temperature to set during heating mode when you are home.
+    #  selector:
+    #    number:
+    #      min: 60
+    #      max: 80
+    #      unit_of_measurement: "°F"
+    #      mode: box
+    #  default: 64
 
     heating_away_temp:
       name: Heating - Away/Eco Temperature
@@ -100,15 +107,22 @@ blueprint:
       default: 55
 
     cooling_default_temp:
-      name: Cooling - Default Temperature
-      description: The default temperature to set during cooling mode when you are home.
+      name: Cooling - Default Temperature (Input Number)
+      description: The input_number entity that holds the default cooling temperature.
       selector:
-        number:
-          min: 70
-          max: 85
-          unit_of_measurement: "°F"
-          mode: box
-      default: 76
+        entity:
+          domain: input_number
+          
+    #cooling_default_temp:
+    #  name: Cooling - Default Temperature
+    #  description: The default temperature to set during cooling mode when you are home.
+    #  selector:
+    #    number:
+    #      min: 70
+    #      max: 85
+    #      unit_of_measurement: "°F"
+    #      mode: box
+    #  default: 76
 
     cooling_away_temp:
       name: Cooling - Away/Eco Temperature
