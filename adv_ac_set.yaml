@@ -75,7 +75,7 @@ blueprint:
           max: 70
           unit_of_measurement: "°F"
           mode: box
-      default: 68
+      default: 60
 
     heating_default_temp:
       name: Heating - Default Temperature (Input Number)
