@@ -1,4 +1,4 @@
-blueprint:
+ blueprint:
   name: Advanced AC set point controller
   author: wkethman
   description: >-
@@ -135,7 +135,7 @@ blueprint:
           mode: box
       default: 82
 
-single: mode
+mode: single
 # --- Triggers ---
 # This automation runs when any of the relevant inputs change state.
 trigger:
