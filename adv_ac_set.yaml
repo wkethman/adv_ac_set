@@ -135,7 +135,6 @@
           mode: box
       default: 82
 
-mode: single
 # --- Triggers ---
 # This automation runs when any of the relevant inputs change state.
 trigger:
