@@ -52,8 +52,8 @@ blueprint:
       selector:
         number:
           min: 0
-          max: 60
-          unit_of_measurement: minutes
+          max: 120
+          unit_of_measurement: seconds
           mode: slider
 
     weather_forecast:
