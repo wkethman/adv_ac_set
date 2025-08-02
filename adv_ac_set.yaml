@@ -18,12 +18,14 @@ blueprint:
       description: The time to trigger the "day" temperature settings.
       selector:
         time:
+      default: "06:00:00"
 
     evening_time:
       name: Evening Time (Night Start)
       description: The time to trigger the "night" temperature settings.
       selector:
         time:
+      default: "07:30:00"
 
     default_at_night:
       name: Set Default Temperature At Night
@@ -55,6 +57,7 @@ blueprint:
           max: 120
           unit_of_measurement: seconds
           mode: slider
+      default: 60
 
     weather_forecast:
       name: Weather Forecast Entity
