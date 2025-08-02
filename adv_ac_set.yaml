@@ -69,7 +69,7 @@ blueprint:
       selector:
         number:
           min: 40
-          max: 75
+          max: 70
           unit_of_measurement: "°F"
           mode: box
 
@@ -89,7 +89,7 @@ blueprint:
       selector:
         number:
           min: 50
-          max: 70
+          max: 65
           unit_of_measurement: "°F"
           mode: box
 
@@ -98,7 +98,7 @@ blueprint:
       description: The default temperature to set during cooling mode when you are home.
       selector:
         number:
-          min: 68
+          min: 70
           max: 85
           unit_of_measurement: "°F"
           mode: box
