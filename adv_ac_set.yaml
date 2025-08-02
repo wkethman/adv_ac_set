@@ -25,7 +25,7 @@ blueprint:
       description: The time to trigger the "night" temperature settings.
       selector:
         time:
-      default: "07:30:00"
+      default: "19:30:00"
 
     default_at_night:
       name: Set Default Temperature At Night
