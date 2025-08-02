@@ -1,0 +1,219 @@
+blueprint:
+  name: Advanced AC set point controller
+  description: >-
+    Automates the AC set point and HVAC mode based on time of day, home occupancy,
+    whether windows or doors are open, and outdoor temperature.
+  domain: automation
+  input:
+    target_climate:
+      name: Target Climate Device
+      description: The climate entity (thermostat) to control.
+      selector:
+        entity:
+          domain: climate
+
+    morning_time:
+      name: Morning Time (Day Start)
+      description: The time to trigger the "day" temperature settings.
+      selector:
+        time:
+
+    evening_time:
+      name: Evening Time (Night Start)
+      description: The time to trigger the "night" temperature settings.
+      selector:
+        time:
+
+    default_at_night:
+      name: Set Default Temperature At Night
+      description: If 'on', the main/default temperature is applied at night. If 'off', it's applied during the day.
+      selector:
+        boolean:
+      default: false
+
+    home_mode:
+      name: Home Mode Input Boolean
+      description: An input_boolean that is 'on' when you are home and 'off' when you are away.
+      selector:
+        entity:
+          domain: input_boolean
+
+    open_sensor:
+      name: Window/Door Sensor
+      description: A binary sensor that is 'on' if any windows or doors are open.
+      selector:
+        entity:
+          domain: binary_sensor
+
+    open_duration:
+      name: Open Sensor Delay
+      description: Time in minutes a window/door must be open before the AC set point is adjusted.
+      selector:
+        number:
+          min: 0
+          max: 60
+          unit_of_measurement: minutes
+          mode: slider
+
+    weather_forecast:
+      name: Weather Forecast Entity
+      description: The weather entity used to determine the outdoor temperature. The automation will use this entity's 'temperature' attribute.
+      selector:
+        entity:
+          domain: weather
+
+    hvac_mode_threshold:
+      name: Heating/Cooling Mode Threshold
+      description: The outdoor temperature (°F) below which 'Heating' settings are used. Above this, 'Cooling' settings are used.
+      selector:
+        number:
+          min: 40
+          max: 75
+          unit_of_measurement: "°F"
+          mode: box
+
+    heating_default_temp:
+      name: Heating - Default Temperature
+      description: The default temperature to set during heating mode when you are home.
+      selector:
+        number:
+          min: 60
+          max: 80
+          unit_of_measurement: "°F"
+          mode: box
+
+    heating_away_temp:
+      name: Heating - Away/Eco Temperature
+      description: The lower temperature set point for heating mode when away or windows are open.
+      selector:
+        number:
+          min: 50
+          max: 70
+          unit_of_measurement: "°F"
+          mode: box
+
+    cooling_default_temp:
+      name: Cooling - Default Temperature
+      description: The default temperature to set during cooling mode when you are home.
+      selector:
+        number:
+          min: 68
+          max: 85
+          unit_of_measurement: "°F"
+          mode: box
+
+    cooling_away_temp:
+      name: Cooling - Away/Eco Temperature
+      description: The higher temperature set point for cooling mode when away or windows are open.
+      selector:
+        number:
+          min: 75
+          max: 90
+          unit_of_measurement: "°F"
+          mode: box
+
+single: mode
+# --- Triggers ---
+# This automation runs when any of the relevant inputs change state.
+trigger:
+  - platform: time
+    at: !input morning_time
+  - platform: time
+    at: !input evening_time
+  - platform: state
+    entity_id: !input home_mode
+  - platform: state
+    entity_id: !input open_sensor
+  - platform: state
+    entity_id: !input weather_forecast
+    attribute: temperature
+
+# --- Actions ---
+# The core logic to determine the correct temperature set point.
+action:
+  - choose:
+      # --- CONDITION 1: Windows or Doors are open ---
+      # If the contact sensor has been 'on' for the specified duration, set to away/eco temp.
+      - conditions:
+          - condition: state
+            entity_id: !input open_sensor
+            state: 'on'
+            for:
+              minutes: !input open_duration
+        sequence:
+          - service: climate.set_temperature
+            target:
+              entity_id: !input target_climate
+            data:
+              hvac_mode: >
+                {% if (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
+                  heat
+                {% else %}
+                  cool
+                {% endif %}
+              temperature: >
+                {% if (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
+                  {{ !input 'heating_away_temp' }}
+                {% else %}
+                  {{ !input 'cooling_away_temp' }}
+                {% endif %}
+
+      # --- CONDITION 2: Away Mode ---
+      # If not home (and windows are closed), set to away/eco temp.
+      - conditions:
+          - condition: state
+            entity_id: !input home_mode
+            state: 'off'
+        sequence:
+          - service: climate.set_temperature
+            target:
+              entity_id: !input target_climate
+            data:
+              hvac_mode: >
+                {% if (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
+                  heat
+                {% else %}
+                  cool
+                {% endif %}
+              temperature: >
+                {% if (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
+                  {{ !input 'heating_away_temp' }}
+                {% else %}
+                  {{ !input 'cooling_away_temp' }}
+                {% endif %}
+
+    # --- DEFAULT: Home and windows are closed ---
+    # This is the main logic for when you are home.
+    default:
+      - service: climate.set_temperature
+        target:
+          entity_id: !input target_climate
+        data:
+          hvac_mode: >
+            {% if (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
+              heat
+            {% else %}
+              cool
+            {% endif %}
+          temperature: >
+            {% set morning = states('input.datetime.morning_time') %}
+            {% set evening = states('input.datetime.evening_time') %}
+            {% set is_day = now() >= today_at(morning) and now() < today_at(evening) %}
+            {% set use_default_temp = (is_day and not !input('default_at_night')) or (not is_day and !input('default_at_night')) %}
+            {% set is_heating_mode = (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
+
+            {% if use_default_temp %}
+              {# Set to the comfortable "default" temperature #}
+              {% if is_heating_mode %}
+                {{ !input 'heating_default_temp' }}
+              {% else %}
+                {{ !input 'cooling_default_temp' }}
+              {% endif %}
+            {% else %}
+              {# Set to the economical "away" temperature #}
+              {% if is_heating_mode %}
+                {{ !input 'heating_away_temp' }}
+              {% else %}
+                {{ !input 'cooling_away_temp' }}
+              {% endif %}
+            {% endif %}
