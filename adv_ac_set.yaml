@@ -161,10 +161,11 @@ action:
       # --- CONDITION 1: Windows or Doors are open ---
       # If the contact sensor has been 'on' for the specified duration, set to away/eco temp.
       - conditions:
-          - condition: template
-            value_template: >
-              {{ is_state(!input 'open_sensor', 'on') and
-                 (now() - states[(!input 'open_sensor')].last_changed).total_seconds() | int(0) >= (!input 'open_duration') | int(0) }}
+          - condition: state
+            entity_id: !input open_sensor
+            state: 'on'
+            for:
+              seconds: !input open_duration
         sequence:
           - service: climate.set_temperature
             target:
