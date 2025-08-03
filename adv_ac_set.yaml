@@ -143,6 +143,7 @@ variables:
   morning_time: !input 'morning_time'
   evening_time: !input 'evening_time'
   default_at_night: !input 'default_at_night'
+  open_duration: !input open_duration
   is_heating_mode: "{{ (state_attr(weather_forecast, 'temperature') | float(hvac_mode_threshold)) < hvac_mode_threshold }}"
   hvac_mode: "{% if is_heating_mode %}heat{% else %}cool{% endif %}"
   away_temp: "{% if is_heating_mode %}{{ cooling_away_temp }}{% else %}{{ cooling_away_temp }}{% endif %}"
@@ -162,7 +163,7 @@ action:
           entity_id: !input open_sensor
           state: 'on'
           for:
-            seconds: "{{ !input open_duration }}"
+            seconds: "{{ open_duration }}"
       sequence:
         - service: climate.set_temperature
           target:
