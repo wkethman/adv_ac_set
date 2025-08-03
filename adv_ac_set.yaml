@@ -113,6 +113,7 @@ blueprint:
           mode: box
       default: 82
 
+mode: single
 # --- Triggers ---
 # This automation runs when any of the relevant inputs change state.
 trigger:
@@ -140,6 +141,7 @@ variables:
     is_day: "{{ now() >= today_at(!input 'morning_time') and now() < today_at(!input 'evening_time') }}"
     use_default_temp: "{{ (is_day and not !input('default_at_night')) or (not is_day and !input('default_at_night')) }}"
 
+condition: []
 # --- Actions ---
 # The core logic to determine the correct temperature set point.
 action:
