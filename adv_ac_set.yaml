@@ -1,4 +1,4 @@
- blueprint:
+blueprint:
   name: Advanced AC set point controller
   author: wkethman
   description: >-
