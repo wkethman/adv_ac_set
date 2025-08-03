@@ -149,6 +149,10 @@ trigger:
   - platform: state
     entity_id: !input weather_forecast
     attribute: temperature
+  - platform: state
+    entity_id: !input heating_default_temp
+  - platform: state
+    entity_id: !input cooling_default_temp
 
 # --- Actions ---
 # The core logic to determine the correct temperature set point.
@@ -161,7 +165,7 @@ action:
             entity_id: !input open_sensor
             state: 'on'
             for:
-              minutes: !input open_duration
+              seconds: "{{ !input open_duration }}"
         sequence:
           - service: climate.set_temperature
             target:
@@ -227,9 +231,9 @@ action:
             {% if use_default_temp %}
               {# Set to the comfortable "default" temperature #}
               {% if is_heating_mode %}
-                {{ !input 'heating_default_temp' }}
+                {{ states(!input 'heating_default_temp') | float(64) }}
               {% else %}
-                {{ !input 'cooling_default_temp' }}
+                {{ states(!input 'cooling_default_temp') | float(76) }}
               {% endif %}
             {% else %}
               {# Set to the economical "away" temperature #}
