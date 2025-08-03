@@ -134,12 +134,12 @@ trigger:
     entity_id: !input cooling_default_temp
 
 variables:
-    is_heating_mode: "{{ (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' }}"
-    hvac_mode: "{% if is_heating_mode %}heat{% else %}cool{% endif %}"
-    away_temp: "{% if is_heating_mode %}{{ !input 'heating_away_temp' }}{% else %}{{ !input 'cooling_away_temp' }}{% endif %}"
-    default_temp: "{% if is_heating_mode %}{{ states(!input 'heating_default_temp') | float(64) }}{% else %}{{ states(!input 'cooling_default_temp') | float(76) }}{% endif %}"
-    is_day: "{{ now() >= today_at(!input 'morning_time') and now() < today_at(!input 'evening_time') }}"
-    use_default_temp: "{{ (is_day and not !input('default_at_night')) or (not is_day and !input('default_at_night')) }}"
+  is_heating_mode: "{{ (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' }}"
+  hvac_mode: "{% if is_heating_mode %}heat{% else %}cool{% endif %}"
+  away_temp: "{% if is_heating_mode %}{{ !input 'heating_away_temp' }}{% else %}{{ !input 'cooling_away_temp' }}{% endif %}"
+  default_temp: "{% if is_heating_mode %}{{ states(!input 'heating_default_temp') | float(64) }}{% else %}{{ states(!input 'cooling_default_temp') | float(76) }}{% endif %}"
+  is_day: "{{ now() >= today_at(!input 'morning_time') and now() < today_at(!input 'evening_time') }}"
+  use_default_temp: "{{ (is_day and not !input('default_at_night')) or (not is_day and !input('default_at_night')) }}"
 
 condition: []
 # --- Actions ---
