@@ -84,17 +84,6 @@ blueprint:
         entity:
           domain: input_number
           
-    #heating_default_temp:
-    #  name: Heating - Default Temperature
-    #  description: The default temperature to set during heating mode when you are home.
-    #  selector:
-    #    number:
-    #      min: 60
-    #      max: 80
-    #      unit_of_measurement: "°F"
-    #      mode: box
-    #  default: 64
-
     heating_away_temp:
       name: Heating - Away/Eco Temperature
       description: The lower temperature set point for heating mode when away or windows are open.
@@ -113,17 +102,6 @@ blueprint:
         entity:
           domain: input_number
           
-    #cooling_default_temp:
-    #  name: Cooling - Default Temperature
-    #  description: The default temperature to set during cooling mode when you are home.
-    #  selector:
-    #    number:
-    #      min: 70
-    #      max: 85
-    #      unit_of_measurement: "°F"
-    #      mode: box
-    #  default: 76
-
     cooling_away_temp:
       name: Cooling - Away/Eco Temperature
       description: The higher temperature set point for cooling mode when away or windows are open.
@@ -157,6 +135,14 @@ trigger:
 # --- Actions ---
 # The core logic to determine the correct temperature set point.
 action:
+  variables:
+    is_heating_mode: "{{ (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' }}"
+    hvac_mode: "{% if is_heating_mode %}heat{% else %}cool{% endif %}"
+    away_temp: "{% if is_heating_mode %}{{ !input 'heating_away_temp' }}{% else %}{{ !input 'cooling_away_temp' }}{% endif %}"
+    default_temp: "{% if is_heating_mode %}{{ states(!input 'heating_default_temp') | float(64) }}{% else %}{{ states(!input 'cooling_default_temp') | float(76) }}{% endif %}"
+    is_day: "{{ now() >= today_at(!input 'morning_time') and now() < today_at(!input 'evening_time') }}"
+    use_default_temp: "{{ (is_day and not !input('default_at_night')) or (not is_day and !input('default_at_night')) }}"
+
   - choose:
       # --- CONDITION 1: Windows or Doors are open ---
       # If the contact sensor has been 'on' for the specified duration, set to away/eco temp.
@@ -165,24 +151,14 @@ action:
             entity_id: !input open_sensor
             state: 'on'
             for:
-              seconds: !input open_duration
+              seconds: "{{ !input open_duration }}"
         sequence:
           - service: climate.set_temperature
             target:
               entity_id: !input target_climate
             data:
-              hvac_mode: >
-                {% if (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
-                  heat
-                {% else %}
-                  cool
-                {% endif %}
-              temperature: >
-                {% if (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
-                  {{ !input 'heating_away_temp' }}
-                {% else %}
-                  {{ !input 'cooling_away_temp' }}
-                {% endif %}
+              hvac_mode: "{{ hvac_mode }}"
+              temperature: "{{ away_temp }}"
 
       # --- CONDITION 2: Away Mode ---
       # If not home (and windows are closed), set to away/eco temp.
@@ -195,18 +171,8 @@ action:
             target:
               entity_id: !input target_climate
             data:
-              hvac_mode: >
-                {% if (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
-                  heat
-                {% else %}
-                  cool
-                {% endif %}
-              temperature: >
-                {% if (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
-                  {{ !input 'heating_away_temp' }}
-                {% else %}
-                  {{ !input 'cooling_away_temp' }}
-                {% endif %}
+              hvac_mode: "{{ hvac_mode }}"
+              temperature: "{{ away_temp }}"
 
     # --- DEFAULT: Home and windows are closed ---
     # This is the main logic for when you are home.
@@ -215,31 +181,10 @@ action:
         target:
           entity_id: !input target_climate
         data:
-          hvac_mode: >
-            {% if (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
-              heat
-            {% else %}
-              cool
-            {% endif %}
+          hvac_mode: "{{ hvac_mode }}"
           temperature: >
-            {% set morning = states('input.datetime.morning_time') %}
-            {% set evening = states('input.datetime.evening_time') %}
-            {% set is_day = now() >= today_at(morning) and now() < today_at(evening) %}
-            {% set use_default_temp = (is_day and not !input('default_at_night')) or (not is_day and !input('default_at_night')) %}
-            {% set is_heating_mode = (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' %}
-
             {% if use_default_temp %}
-              {# Set to the comfortable "default" temperature #}
-              {% if is_heating_mode %}
-                {{ states(!input 'heating_default_temp') | float(64) }}
-              {% else %}
-                {{ states(!input 'cooling_default_temp') | float(76) }}
-              {% endif %}
+              {{ default_temp }}
             {% else %}
-              {# Set to the economical "away" temperature #}
-              {% if is_heating_mode %}
-                {{ !input 'heating_away_temp' }}
-              {% else %}
-                {{ !input 'cooling_away_temp' }}
-              {% endif %}
+              {{ away_temp }}
             {% endif %}
