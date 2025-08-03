@@ -145,36 +145,36 @@ condition: []
 # --- Actions ---
 # The core logic to determine the correct temperature set point.
 action:
-    - choose:
-      # --- CONDITION 1: Windows or Doors are open ---
-      # If the contact sensor has been 'on' for the specified duration, set to away/eco temp.
-      - conditions:
-          - condition: state
-            entity_id: !input open_sensor
-            state: 'on'
-            for:
-              seconds: "{{ !input open_duration }}"
-        sequence:
-          - service: climate.set_temperature
-            target:
-              entity_id: !input target_climate
-            data:
-              hvac_mode: "{{ hvac_mode }}"
-              temperature: "{{ away_temp }}"
+  - choose:
+    # --- CONDITION 1: Windows or Doors are open ---
+    # If the contact sensor has been 'on' for the specified duration, set to away/eco temp.
+    - conditions:
+        - condition: state
+          entity_id: !input open_sensor
+          state: 'on'
+          for:
+            seconds: "{{ !input open_duration }}"
+      sequence:
+        - service: climate.set_temperature
+          target:
+            entity_id: !input target_climate
+          data:
+            hvac_mode: "{{ hvac_mode }}"
+            temperature: "{{ away_temp }}"
 
-      # --- CONDITION 2: Away Mode ---
-      # If not home (and windows are closed), set to away/eco temp.
-      - conditions:
-          - condition: state
-            entity_id: !input home_mode
-            state: 'off'
-        sequence:
-          - service: climate.set_temperature
-            target:
-              entity_id: !input target_climate
-            data:
-              hvac_mode: "{{ hvac_mode }}"
-              temperature: "{{ away_temp }}"
+    # --- CONDITION 2: Away Mode ---
+    # If not home (and windows are closed), set to away/eco temp.
+    - conditions:
+        - condition: state
+          entity_id: !input home_mode
+          state: 'off'
+      sequence:
+        - service: climate.set_temperature
+          target:
+            entity_id: !input target_climate
+          data:
+            hvac_mode: "{{ hvac_mode }}"
+            temperature: "{{ away_temp }}"
 
     # --- DEFAULT: Home and windows are closed ---
     # This is the main logic for when you are home.
