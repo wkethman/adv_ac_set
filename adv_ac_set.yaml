@@ -1,8 +1,8 @@
 blueprint:
-  name: Advanced AC set point controller
+  name: Advanced two mode AC set point controller
   author: wkethman
   description: >-
-    Automates the AC set point and HVAC mode based on time of day, home occupancy,
+    Automates the AC set point and HVAC mode (heat/cool) based on time of day, home occupancy,
     whether windows or doors are open, and outdoor temperature.
   domain: automation
   input:
