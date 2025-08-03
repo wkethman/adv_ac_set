@@ -146,7 +146,7 @@ variables:
   is_heating_mode: "{{ (state_attr(weather_forecast, 'temperature') | float(hvac_mode_threshold)) < hvac_mode_threshold }}"
   hvac_mode: "{% if is_heating_mode %}heat{% else %}cool{% endif %}"
   away_temp: "{% if is_heating_mode %}{{ cooling_away_temp }}{% else %}{{ cooling_away_temp }}{% endif %}"
-  default_temp: "{% if is_heating_mode %}{{ states(heating_default_temp) | float(64) }}{% else %}{{ states(cooling_default_temp:) | float(76) }}{% endif %}"
+  default_temp: "{% if is_heating_mode %}{{ states(heating_default_temp) | float(64) }}{% else %}{{ states(cooling_default_temp) | float(76) }}{% endif %}"
   is_day: "{{ now() >= today_at(morning_time) and now() < today_at(evening_time) }}"
   use_default_temp: "{{ (is_day and not default_at_night) or (not is_day and default_at_night) }}"
 
