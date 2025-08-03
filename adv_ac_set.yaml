@@ -132,10 +132,7 @@ trigger:
   - platform: state
     entity_id: !input cooling_default_temp
 
-# --- Actions ---
-# The core logic to determine the correct temperature set point.
-action:
-  variables:
+variables:
     is_heating_mode: "{{ (state_attr(!input 'weather_forecast', 'temperature') | float(!input 'hvac_mode_threshold')) < !input 'hvac_mode_threshold' }}"
     hvac_mode: "{% if is_heating_mode %}heat{% else %}cool{% endif %}"
     away_temp: "{% if is_heating_mode %}{{ !input 'heating_away_temp' }}{% else %}{{ !input 'cooling_away_temp' }}{% endif %}"
@@ -143,7 +140,10 @@ action:
     is_day: "{{ now() >= today_at(!input 'morning_time') and now() < today_at(!input 'evening_time') }}"
     use_default_temp: "{{ (is_day and not !input('default_at_night')) or (not is_day and !input('default_at_night')) }}"
 
-  - choose:
+# --- Actions ---
+# The core logic to determine the correct temperature set point.
+action:
+    - choose:
       # --- CONDITION 1: Windows or Doors are open ---
       # If the contact sensor has been 'on' for the specified duration, set to away/eco temp.
       - conditions:
