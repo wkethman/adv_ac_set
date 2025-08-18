@@ -3,7 +3,7 @@ blueprint:
   author: wkethman
   description: >-
     Automates the AC set point and HVAC mode (heat/cool) based on time of day, home occupancy,
-    whether windows or doors are open, and outdoor temperature.
+    whether windows or doors are open, and outdoor temperature. This contains a manual override functionality.
   domain: automation
   input:
     target_climate:
@@ -12,6 +12,14 @@ blueprint:
       selector:
         entity:
           domain: climate
+
+    override_toggle:
+      name: (Optional) Override Toggle Helper
+      description: The input_boolean helper that acts as the manual override switch.
+      selector:
+        entity:
+          domain: input_boolean
+      default: {} # This makes the input optional
 
     morning_time:
       name: Morning Time (Day Start)
@@ -134,6 +142,7 @@ trigger:
     entity_id: !input cooling_default_temp
 
 variables:
+  override_toggle: !input 'override_toggle'
   weather_forecast: !input 'weather_forecast'
   hvac_mode_threshold: !input 'hvac_mode_threshold'
   heating_away_temp: !input 'heating_away_temp'
@@ -151,7 +160,15 @@ variables:
   is_day: "{{ now() >= today_at(morning_time) and now() < today_at(evening_time) }}"
   use_default_temp: "{{ (is_day and not default_at_night) or (not is_day and default_at_night) }}"
 
-condition: []
+condition: 
+  - condition: template
+    value_template: >-
+      {% if override_toggle is mapping and override_toggle.entity_id %}
+        {{ is_state(override_toggle.entity_id, 'off') }}
+      {% else %}
+        true
+      {% endif %}
+      
 # --- Actions ---
 # The core logic to determine the correct temperature set point.
 action:
