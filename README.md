@@ -7,9 +7,12 @@ live copy (`wkethman/adv_ac_set.yaml`) is a deployment artifact:
 
 - Make changes **here**, then deploy to HA with
   `ha_manage_blueprints(action="save", path="wkethman/adv_ac_set.yaml",
-  yaml=<file content>, overwrite=true)` (the blueprint save API re-serializes
-  the file — HA strips comments and normalizes selector fields, so the live
-  copy will never be byte-identical; that is expected).
+  yaml=<file content>, source_url="https://github.com/wkethman/adv_ac_set/raw/main/adv_ac_set.yaml",
+  overwrite=true)` (the blueprint save API re-serializes the file — HA strips
+  comments and normalizes selector fields, so the live copy will never be
+  byte-identical; that is expected). Always pass `source_url` (the raw file
+  URL, not the .git URL) so HA's blueprint UI can show the source and check
+  for updates.
 - Do not edit the blueprint in the HA UI; any UI-only change must be
   back-ported here.
 - The current version is in `blueprint.description` (v2.2).
