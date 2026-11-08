@@ -2,6 +2,10 @@ Automates the AC set point and HVAC mode based on time of day, home occupancy, w
 
 ## Changelog
 
+### v2.2 (2026-11-08)
+- Versioned, self-documenting `description` field (what the blueprint does +
+  changelog), so the automation UI shows the version and how it works.
+
 ### v2.1 (2026-11-08)
 - **Fix: manual override gate now works.** The condition assumed the optional
   `override_toggle` input arrives as an `{entity_id: ...}` mapping, but

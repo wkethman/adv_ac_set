@@ -2,8 +2,14 @@ blueprint:
   name: Advanced two mode AC set point controller
   author: wkethman
   description: >-
-    Automates the AC set point and HVAC mode (heat/cool) based on time of day, home occupancy,
-    whether windows or doors are open, and outdoor temperature. This contains a manual override functionality.
+    v2.2 - Two-mode AC setpoint controller. Each run sets the target climate's hvac_mode and
+    temperature from time of day (morning/evening), home/away, windows or doors open (after the
+    open-sensor delay), and outdoor temperature vs. the heating/cooling threshold. The run is
+    skipped while the optional override toggle is on (manual override).
+    Changelog: v2.2 (2026-11-08) versioned description. v2.1 (2026-11-08) fixed the manual
+    override gate (old 'is mapping' check never matched storage-mode blueprints), added the
+    weather-unavailable fallback (float(none) + thermostat's current mode), and fixed the
+    whitespace-fragile default-branch temperature template. v1.x original release.
   domain: automation
   input:
     target_climate:
