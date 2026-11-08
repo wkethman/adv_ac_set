@@ -97,7 +97,7 @@ blueprint:
       selector:
         entity:
           domain: input_number
-          
+
     heating_away_temp:
       name: Heating - Away/Eco Temperature
       description: The lower temperature set point for heating mode when away or windows are open.
@@ -115,7 +115,7 @@ blueprint:
       selector:
         entity:
           domain: input_number
-          
+
     cooling_away_temp:
       name: Cooling - Away/Eco Temperature
       description: The higher temperature set point for cooling mode when away or windows are open.
@@ -208,7 +208,7 @@ condition:
   - condition: template
     value_template: >-
       {{ not (override_entity and is_state(override_entity, 'on')) }}
-      
+
 # --- Actions ---
 # The core logic to determine the correct temperature set point.
 action:

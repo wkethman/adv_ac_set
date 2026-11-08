@@ -1,5 +1,19 @@
 Automates the AC set point and HVAC mode based on time of day, home occupancy, whether windows or doors are open, and outdoor temperature.
 
+## Ground truth & deployment
+
+This repository is the ground truth for the blueprint. The Home Assistant
+live copy (`wkethman/adv_ac_set.yaml`) is a deployment artifact:
+
+- Make changes **here**, then deploy to HA with
+  `ha_manage_blueprints(action="save", path="wkethman/adv_ac_set.yaml",
+  yaml=<file content>, overwrite=true)` (the blueprint save API re-serializes
+  the file — HA strips comments and normalizes selector fields, so the live
+  copy will never be byte-identical; that is expected).
+- Do not edit the blueprint in the HA UI; any UI-only change must be
+  back-ported here.
+- The current version is in `blueprint.description` (v2.2).
+
 ## Changelog
 
 ### v2.2 (2026-11-08)
