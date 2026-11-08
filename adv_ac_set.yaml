@@ -157,7 +157,9 @@ variables:
   # Resolve the override entity. The optional input arrives as a plain
   # entity-id string in storage-mode blueprints, as an {entity_id: ...}
   # mapping in some contexts, or as an empty mapping when omitted.
-  override_entity: "{{ override_toggle.entity_id if override_toggle is mapping else override_toggle }}"
+  override_entity: >-
+    {{ override_toggle.entity_id if override_toggle is mapping
+       else override_toggle }}
   # If the weather entity is unavailable, fall back to the climate device's
   # current mode instead of assuming cooling mode.
   is_heating_mode: >-
