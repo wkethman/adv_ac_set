@@ -142,6 +142,7 @@ trigger:
     entity_id: !input cooling_default_temp
 
 variables:
+  target_climate: !input 'target_climate'
   override_toggle: !input 'override_toggle'
   weather_forecast: !input 'weather_forecast'
   hvac_mode_threshold: !input 'hvac_mode_threshold'
@@ -153,21 +154,34 @@ variables:
   evening_time: !input 'evening_time'
   default_at_night: !input 'default_at_night'
   open_duration: !input open_duration
-  is_heating_mode: "{{ (state_attr(weather_forecast, 'temperature') | float(hvac_mode_threshold)) < hvac_mode_threshold }}"
+  # Resolve the override entity. The optional input arrives as a plain
+  # entity-id string in storage-mode blueprints, as an {entity_id: ...}
+  # mapping in some contexts, or as an empty mapping when omitted.
+  override_entity: "{{ override_toggle.entity_id if override_toggle is mapping else override_toggle }}"
+  # If the weather entity is unavailable, fall back to the climate device's
+  # current mode instead of assuming cooling mode.
+  is_heating_mode: >-
+    {% set t = state_attr(weather_forecast, 'temperature') | float(none) %}
+    {% if t is none %}
+      {{ states(target_climate) in ['heat', 'auto'] }}
+    {% else %}
+      {{ t < hvac_mode_threshold }}
+    {% endif %}
   hvac_mode: "{% if is_heating_mode %}heat{% else %}cool{% endif %}"
   away_temp: "{% if is_heating_mode %}{{ heating_away_temp }}{% else %}{{ cooling_away_temp }}{% endif %}"
   default_temp: "{% if is_heating_mode %}{{ states(heating_default_temp) | float(64) }}{% else %}{{ states(cooling_default_temp) | float(76) }}{% endif %}"
   is_day: "{{ now() >= today_at(morning_time) and now() < today_at(evening_time) }}"
   use_default_temp: "{{ (is_day and not default_at_night) or (not is_day and default_at_night) }}"
+  # Single-expression template so the service receives a native float
+  # instead of a string carrying surrounding whitespace.
+  selected_temp: "{{ default_temp if use_default_temp else away_temp }}"
 
 condition: 
   - condition: template
+    # Skip this run while a manual override is active. Renders 'true'
+    # (run) when the toggle input is empty or the entity is not 'on'.
     value_template: >-
-      {% if override_toggle is mapping and override_toggle.entity_id %}
-        {{ is_state(override_toggle.entity_id, 'off') }}
-      {% else %}
-        true
-      {% endif %}
+      {{ not (override_entity and is_state(override_entity, 'on')) }}
       
 # --- Actions ---
 # The core logic to determine the correct temperature set point.
@@ -211,9 +225,4 @@ action:
           entity_id: !input target_climate
         data:
           hvac_mode: "{{ hvac_mode }}"
-          temperature: >
-            {% if use_default_temp %}
-              {{ default_temp }}
-            {% else %}
-              {{ away_temp }}
-            {% endif %}
+          temperature: "{{ selected_temp }}"
