@@ -154,14 +154,14 @@ variables:
   evening_time: !input 'evening_time'
   default_at_night: !input 'default_at_night'
   open_duration: !input open_duration
-  # Resolve the override entity. The optional input arrives as a plain
-  # entity-id string in storage-mode blueprints, as an {entity_id: ...}
-  # mapping in some contexts, or as an empty mapping when omitted.
+  # Storage-mode blueprint automations pass the raw entity-id string from the
+  # UI, not a mapping. Normalize both shapes to a plain entity id (or None).
   override_entity: >-
     {{ override_toggle.entity_id if override_toggle is mapping
        else override_toggle }}
-  # If the weather entity is unavailable, fall back to the climate device's
-  # current mode instead of assuming cooling mode.
+  # float(none) leaves unavailable weather as None instead of throwing; fall
+  # back to the thermostat's current mode so the AC never flips to cool in
+  # the middle of winter (or heat in summer) just because the feed is down.
   is_heating_mode: >-
     {% set t = state_attr(weather_forecast, 'temperature') | float(none) %}
     {% if t is none %}
@@ -169,19 +169,37 @@ variables:
     {% else %}
       {{ t < hvac_mode_threshold }}
     {% endif %}
-  hvac_mode: "{% if is_heating_mode %}heat{% else %}cool{% endif %}"
-  away_temp: "{% if is_heating_mode %}{{ heating_away_temp }}{% else %}{{ cooling_away_temp }}{% endif %}"
-  default_temp: "{% if is_heating_mode %}{{ states(heating_default_temp) | float(64) }}{% else %}{{ states(cooling_default_temp) | float(76) }}{% endif %}"
-  is_day: "{{ now() >= today_at(morning_time) and now() < today_at(evening_time) }}"
-  use_default_temp: "{{ (is_day and not default_at_night) or (not is_day and default_at_night) }}"
-  # Single-expression template so the service receives a native float
-  # instead of a string carrying surrounding whitespace.
+  hvac_mode: >-
+    {% if is_heating_mode %}
+      heat
+    {% else %}
+      cool
+    {% endif %}
+  away_temp: >-
+    {% if is_heating_mode %}
+      {{ heating_away_temp }}
+    {% else %}
+      {{ cooling_away_temp }}
+    {% endif %}
+  default_temp: >-
+    {% if is_heating_mode %}
+      {{ states(heating_default_temp) | float(64) }}
+    {% else %}
+      {{ states(cooling_default_temp) | float(76) }}
+    {% endif %}
+  is_day: >-
+    {{ now() >= today_at(morning_time) and now() < today_at(evening_time) }}
+  use_default_temp: >-
+    {{ (is_day and not default_at_night) or (not is_day and default_at_night) }}
+  # Single expression on purpose: it renders a native number (e.g. 62.0), so
+  # climate.set_temperature receives a float instead of a whitespace-padded
+  # string.
   selected_temp: "{{ default_temp if use_default_temp else away_temp }}"
 
-condition: 
+condition:
+  # The override toggle is optional, so override_entity may be None/empty.
+  # When the override is on, every trigger is skipped.
   - condition: template
-    # Skip this run while a manual override is active. Renders 'true'
-    # (run) when the toggle input is empty or the entity is not 'on'.
     value_template: >-
       {{ not (override_entity and is_state(override_entity, 'on')) }}
       
